@@ -20,10 +20,10 @@ import { saveDemoToken } from "@/lib/api";
 const NAV_ITEMS = [
   { id: "overview",  icon: LayoutDashboard, label: "Overview",       anchor: "workspace-overview" },
   { id: "inputs",    icon: FileText,        label: "Product Inputs",  anchor: "workspace-inputs" },
-  { id: "icp",       icon: Users,           label: "ICP & Buyers",   anchor: "workspace-report" },
-  { id: "messaging", icon: MessageSquare,   label: "Messaging",       anchor: "workspace-report" },
-  { id: "outbound",  icon: Send,            label: "Outbound",        anchor: "workspace-report" },
-  { id: "sales",     icon: Briefcase,       label: "Sales Assets",   anchor: "workspace-report" },
+  { id: "icp",       icon: Users,           label: "ICP & Buyers",   anchor: "group-market-strategy" },
+  { id: "messaging", icon: MessageSquare,   label: "Messaging",       anchor: "group-messaging" },
+  { id: "outbound",  icon: Send,            label: "Outbound",        anchor: "group-sales-outreach" },
+  { id: "sales",     icon: Briefcase,       label: "Sales Assets",   anchor: "group-commercial" },
   { id: "trust",     icon: ShieldCheck,     label: "Trust Review",   anchor: "workspace-trust" },
   { id: "export",    icon: Download,        label: "Export",          anchor: "workspace-export" },
 ];

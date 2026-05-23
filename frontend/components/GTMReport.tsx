@@ -24,6 +24,7 @@ interface SectionGroup {
   color: string;
   dot: string;
   indices: number[]; // 1-based section numbers in expected order
+  groupId: string;
 }
 
 const SECTION_GROUPS: SectionGroup[] = [
@@ -32,24 +33,28 @@ const SECTION_GROUPS: SectionGroup[] = [
     color: "text-blue-600",
     dot: "bg-blue-500",
     indices: [1, 2, 3, 4, 5],
+    groupId: "group-market-strategy",
   },
   {
     label: "Messaging & Positioning",
     color: "text-violet-600",
     dot: "bg-violet-500",
     indices: [6, 7, 8, 9, 11],
+    groupId: "group-messaging",
   },
   {
     label: "Sales & Outreach Assets",
     color: "text-amber-600",
     dot: "bg-amber-500",
     indices: [12, 13, 14, 15],
+    groupId: "group-sales-outreach",
   },
   {
     label: "Commercial & Action Plan",
     color: "text-emerald-600",
     dot: "bg-emerald-500",
     indices: [10, 16],
+    groupId: "group-commercial",
   },
 ];
 
@@ -166,7 +171,7 @@ export default function GTMReport({ markdown, onRegenerate }: GTMReportProps) {
       {sections.length > 0 ? (
         <div className="space-y-5">
           {SECTION_GROUPS.map((group, gi) => (
-            <div key={group.label}>
+            <div key={group.label} id={group.groupId}>
               {/* Group header */}
               <div className="flex items-center gap-2 mb-2 px-1">
                 <span className={`w-2 h-2 rounded-full flex-shrink-0 ${group.dot}`} />
