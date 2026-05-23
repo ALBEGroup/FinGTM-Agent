@@ -234,23 +234,35 @@ Open: **http://localhost:3000**
 
 ## Deployment & Security Notes
 
-> **This is a local MVP / portfolio project.** The backend is not hardened for public deployment.  
+> **This is a local MVP / portfolio project.**  
 > Before exposing the backend to the internet, review and address the items below.
 
-| Requirement | Status | Action |
+### Backend Environment Variables
+
+| Variable | Default | Description |
 |---|---|---|
-| Rate limiting on `/api/generate-gtm-pack` | **Not implemented** | Add `slowapi` or a reverse-proxy rate limit before public deployment |
-| Backend authentication | **Not implemented** | Add a shared-secret header (`X-API-Key`) or token gate before going public |
-| CORS origin configuration | Configurable via env | Set `ALLOWED_ORIGIN=https://your-domain.com` in backend environment |
-| API key isolation | Done | `DEEPSEEK_API_KEY` is read server-side only — never set it in the frontend |
-| Error message safety | Done | Backend exceptions are logged server-side; only safe text is returned to the client |
-| Content disclaimer | Done | All generated content is labeled "For strategic reference only" |
+| `DEEPSEEK_API_KEY` | *(required)* | Your DeepSeek API key — server-side only, never expose to the browser |
+| `ALLOWED_ORIGIN` | `http://localhost:3000` | Frontend origin allowed by CORS — set to your production URL before deploying |
+| `RATE_LIMIT` | `5/minute` | slowapi rate limit per IP on the generate endpoint (e.g. `"10/minute"`, `"100/hour"`) |
+| `DEMO_ACCESS_TOKEN` | *(unset)* | Optional shared secret to gate the demo. If set, requests must include a matching `X-Demo-Access-Token` header |
+
+### Deployment Checklist
+
+| Requirement | Status | Notes |
+|---|---|---|
+| Rate limiting on `/api/generate-gtm-pack` | **Done** | `slowapi` — default 5 req/min/IP, override with `RATE_LIMIT` env var |
+| Optional demo access gate | **Done** | Set `DEMO_ACCESS_TOKEN` env var; enter token in sidebar to authenticate |
+| HTTP security headers | **Done** | `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy` |
+| CORS origin configuration | **Done** | Override default via `ALLOWED_ORIGIN` env var — do not use `*` in production |
+| API key isolation | **Done** | `DEEPSEEK_API_KEY` is read server-side only — never set it in frontend code |
+| Error message safety | **Done** | Backend exceptions are logged server-side; only safe text is returned to the client |
+| Backend authentication | Not implemented | For production, add a proper auth layer (OAuth, session tokens) beyond the demo gate |
+| Content disclaimer | **Done** | All generated content is labeled "For strategic reference only" |
 
 **Key rules:**
 - Keep `DEEPSEEK_API_KEY` in backend environment variables only — never in frontend code or `.env` files committed to git
 - Set `ALLOWED_ORIGIN` to your production frontend URL before deploying — do not use `*`
-- Add rate limiting before public deployment — each request can cost significant DeepSeek API credits
-- Add authentication (shared secret or session token) before public deployment — the endpoint is unauthenticated by default
+- Set `DEMO_ACCESS_TOKEN` to a strong random string before sharing a public demo link
 - Generated content is strategic reference only — not legal, financial, regulatory, or compliance advice
 
 ---
@@ -260,7 +272,9 @@ Open: **http://localhost:3000**
 - `DEEPSEEK_API_KEY` is read server-side only — never sent to the browser
 - All AI calls go through FastAPI — the frontend never calls DeepSeek directly
 - CORS origin is configured via `ALLOWED_ORIGIN` env var (default: `http://localhost:3000`)
-- No database, no authentication — local development and demo tool only
+- Rate limiting via `slowapi` prevents API credit abuse (default: 5 req/min/IP)
+- Demo access token is stored in browser `localStorage` — never in `NEXT_PUBLIC` env vars or source code
+- No database, no user accounts — local development and demo tool only
 - `.env` is in `.gitignore` — never commit your API key
 
 ---

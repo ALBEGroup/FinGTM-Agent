@@ -3,3 +3,4 @@ uvicorn
 openai-agents
 pydantic
 python-dotenv
+slowapi

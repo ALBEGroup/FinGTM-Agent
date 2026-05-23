@@ -1,7 +1,7 @@
 // Left workspace sidebar — fixed 220px on desktop, slide-in overlay on mobile
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   LayoutDashboard,
   FileText,
@@ -13,7 +13,9 @@ import {
   Download,
   X,
   Zap,
+  Lock,
 } from "lucide-react";
+import { saveDemoToken } from "@/lib/api";
 
 const NAV_ITEMS = [
   { id: "overview",  icon: LayoutDashboard, label: "Overview",       anchor: "workspace-overview" },
@@ -36,6 +38,18 @@ function scrollTo(anchorId: string) {
 }
 
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
+  const [demoToken, setDemoToken] = useState("");
+
+  useEffect(() => {
+    const stored = localStorage.getItem("fingtm_demo_access_token") ?? "";
+    setDemoToken(stored);
+  }, []);
+
+  function handleTokenChange(val: string) {
+    setDemoToken(val);
+    saveDemoToken(val);
+  }
+
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -111,8 +125,28 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           ))}
         </nav>
 
+        {/* Demo access token input */}
+        <div className="px-2.5 pt-2.5 pb-0 border-t border-slate-100 flex-shrink-0">
+          <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5">
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <Lock className={`h-3 w-3 flex-shrink-0 ${demoToken ? "text-emerald-500" : "text-slate-400"}`} />
+              <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400">
+                Demo Token
+              </span>
+            </div>
+            <input
+              type="password"
+              value={demoToken}
+              onChange={(e) => handleTokenChange(e.target.value)}
+              placeholder="Optional access token"
+              aria-label="Demo access token"
+              className="w-full px-2 py-1 text-[11px] text-slate-700 bg-white border border-slate-200 rounded-md placeholder:text-slate-300 focus:outline-none focus:ring-1 focus:ring-blue-400/50 focus:border-blue-300 transition-all"
+            />
+          </div>
+        </div>
+
         {/* Bottom workspace card */}
-        <div className="px-2.5 py-3 border-t border-slate-100 flex-shrink-0">
+        <div className="px-2.5 py-2.5 flex-shrink-0">
           <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5">
             <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">
               Workspace
