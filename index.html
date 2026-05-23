@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FinGTM Agent — B2B FinTech GTM Copilot</title>
+  <meta name="description" content="Turn a B2B FinTech SaaS idea into a complete GTM pack. Generate ICP, positioning, outbound sequences, sales enablement, pricing, and trust messaging in minutes." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f8fafc;
+      --white: #ffffff;
+      --border: #e2e8f0;
+      --text: #0f172a;
+      --muted: #64748b;
+      --blue: #2563eb;
+      --blue-light: #eff6ff;
+      --blue-mid: #dbeafe;
+      --green: #10b981;
+      --radius: 12px;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* NAV */
+    nav {
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .nav-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 15px;
+      color: var(--text);
+      text-decoration: none;
+    }
+    .nav-icon {
+      width: 30px; height: 30px;
+      background: var(--blue);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 16px;
+    }
+    .nav-links { display: flex; align-items: center; gap: 12px; }
+    .btn-ghost {
+      padding: 6px 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      background: var(--white);
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.15s;
+    }
+    .btn-ghost:hover { background: var(--bg); color: var(--text); text-decoration: none; }
+    .btn-primary {
+      padding: 6px 16px;
+      background: var(--blue);
+      color: white;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: background 0.15s;
+    }
+    .btn-primary:hover { background: #1d4ed8; text-decoration: none; }
+
+    /* HERO */
+    .hero {
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      padding: 80px 24px 72px;
+      text-align: center;
+    }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      background: var(--blue-light);
+      border: 1px solid var(--blue-mid);
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--blue);
+      margin-bottom: 24px;
+    }
+    .hero-badge span.dot {
+      width: 6px; height: 6px;
+      background: var(--green);
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .hero h1 {
+      font-size: clamp(28px, 5vw, 48px);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: var(--text);
+      max-width: 760px;
+      margin: 0 auto 16px;
+      line-height: 1.15;
+    }
+    .hero h1 span { color: var(--blue); }
+    .hero p {
+      font-size: 17px;
+      color: var(--muted);
+      max-width: 560px;
+      margin: 0 auto 36px;
+      line-height: 1.7;
+    }
+    .hero-ctas { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .hero-ctas a {
+      padding: 11px 24px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.15s;
+    }
+    .cta-main { background: var(--blue); color: white; }
+    .cta-main:hover { background: #1d4ed8; text-decoration: none; }
+    .cta-sec { background: var(--white); color: var(--text); border: 1px solid var(--border); }
+    .cta-sec:hover { background: var(--bg); text-decoration: none; }
+
+    /* SCREENSHOT */
+    .screenshot-wrap {
+      max-width: 1000px;
+      margin: 56px auto 0;
+      padding: 0 24px;
+    }
+    .screenshot-wrap img {
+      width: 100%;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.04);
+      display: block;
+    }
+
+    /* SECTIONS */
+    section { padding: 72px 24px; }
+    .container { max-width: 1100px; margin: 0 auto; }
+    .section-label {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--blue);
+      margin-bottom: 12px;
+    }
+    .section-title {
+      font-size: clamp(22px, 3vw, 32px);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      margin-bottom: 12px;
+    }
+    .section-sub {
+      font-size: 16px;
+      color: var(--muted);
+      max-width: 540px;
+      line-height: 1.7;
+      margin-bottom: 48px;
+    }
+
+    /* WHY CARDS */
+    .why-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+    }
+    .why-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+    }
+    .why-card .icon {
+      width: 36px; height: 36px;
+      background: var(--blue-light);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      margin-bottom: 14px;
+    }
+    .why-card h3 { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+    .why-card p { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+    /* SECTIONS TABLE */
+    .sections-bg { background: var(--white); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .sections-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+    }
+    .section-chip {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 16px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+    .section-num {
+      flex-shrink: 0;
+      width: 24px; height: 24px;
+      background: var(--blue);
+      color: white;
+      border-radius: 50%;
+      font-size: 11px;
+      font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .section-chip h4 { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
+    .section-chip p { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+    /* STACK */
+    .stack-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+    .stack-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+    }
+    .stack-card .layer {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--blue);
+      margin-bottom: 10px;
+    }
+    .stack-card ul { list-style: none; }
+    .stack-card li {
+      font-size: 13px;
+      color: var(--muted);
+      padding: 3px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .stack-card li:last-child { border: none; }
+    .stack-card li strong { color: var(--text); font-weight: 600; }
+
+    /* AUTHORS */
+    .authors-bg { background: var(--white); border-top: 1px solid var(--border); }
+    .authors-inner { display: flex; gap: 16px; flex-wrap: wrap; }
+    .author-card {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 20px 24px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg);
+      text-decoration: none;
+      transition: all 0.15s;
+      flex: 1;
+      min-width: 220px;
+    }
+    .author-card:hover { border-color: var(--blue); background: var(--blue-light); text-decoration: none; }
+    .author-avatar {
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      background: var(--blue);
+      color: white;
+      font-weight: 700;
+      font-size: 16px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .author-name { font-size: 14px; font-weight: 700; color: var(--text); }
+    .author-handle { font-size: 12px; color: var(--muted); }
+
+    /* FOOTER */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 32px 24px;
+      text-align: center;
+    }
+    footer p { font-size: 13px; color: var(--muted); }
+    footer a { color: var(--muted); }
+
+    @media (max-width: 600px) {
+      .hero { padding: 56px 20px 48px; }
+      .nav-links .btn-ghost { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-inner">
+    <a class="nav-logo" href="#">
+      <div class="nav-icon">⚡</div>
+      FinGTM Agent
+    </a>
+    <div class="nav-links">
+      <a class="btn-ghost" href="https://github.com/Becky-Dai/FinGTM-Agent">GitHub</a>
+      <a class="btn-primary" href="https://github.com/Becky-Dai/FinGTM-Agent#getting-started">Get Started</a>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge">
+    <span class="dot"></span>
+    Powered by DeepSeek · Open Source
+  </div>
+  <h1>Turn a B2B FinTech idea into a <span>complete GTM pack</span></h1>
+  <p>Generate ICP definition, buyer committee mapping, positioning, outbound sequences, sales enablement assets, pricing packages, and trust messaging — in minutes.</p>
+  <div class="hero-ctas">
+    <a class="cta-main" href="https://github.com/Becky-Dai/FinGTM-Agent#getting-started">Get Started →</a>
+    <a class="cta-sec" href="https://github.com/Becky-Dai/FinGTM-Agent">View on GitHub</a>
+  </div>
+
+  <div class="screenshot-wrap">
+    <img src="Homepage.png" alt="FinGTM Agent interface — product input form and GTM report" />
+  </div>
+</div>
+
+<!-- WHY -->
+<section>
+  <div class="container">
+    <div class="section-label">Why FinGTM Agent</div>
+    <div class="section-title">Built on real B2B sales logic</div>
+    <div class="section-sub">Not a generic AI writing tool. Every output is grounded in how enterprise FinTech deals actually get won.</div>
+    <div class="why-grid">
+      <div class="why-card">
+        <div class="icon">🎯</div>
+        <h3>Buying Committee Mapping</h3>
+        <p>Identifies Economic Buyer, Champion, Technical Evaluator, and Procurement — separately, with different messages for each.</p>
+      </div>
+      <div class="why-card">
+        <div class="icon">📧</div>
+        <h3>SDR-Ready Outbound</h3>
+        <p>Cold emails, LinkedIn sequences, and voicemail scripts grounded in the buying trigger and ICP — not generic templates.</p>
+      </div>
+      <div class="why-card">
+        <div class="icon">🛡️</div>
+        <h3>FinTech-Aware Trust Messaging</h3>
+        <p>Tells you exactly what you can and cannot claim. No false compliance promises. No fabricated security certifications.</p>
+      </div>
+      <div class="why-card">
+        <div class="icon">💰</div>
+        <h3>Pricing With Upgrade Triggers</h3>
+        <p>Starter / Growth / Pro tiers with sales notes and the exact signals that tell you when to push for an upgrade.</p>
+      </div>
+      <div class="why-card">
+        <div class="icon">🔍</div>
+        <h3>Discovery & Demo Scripts</h3>
+        <p>Structured discovery questions by topic and a full demo script with objection handling moments baked in.</p>
+      </div>
+      <div class="why-card">
+        <div class="icon">🗓️</div>
+        <h3>30-Day Launch Plan</h3>
+        <p>Week-by-week execution plan: tasks, deliverables, and measurable success metrics from day one.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTIONS -->
+<section class="sections-bg">
+  <div class="container">
+    <div class="section-label">Output</div>
+    <div class="section-title">16 GTM sections from one product brief</div>
+    <div class="section-sub">Fill in 16 product fields. Get a complete, immediately deployable GTM and sales enablement package.</div>
+    <div class="sections-grid">
+      <div class="section-chip"><div class="section-num">1</div><div><h4>Executive Summary</h4><p>GTM recommendation, risks, opportunities</p></div></div>
+      <div class="section-chip"><div class="section-num">2</div><div><h4>ICP Definition</h4><p>Firmographics, budget &amp; urgency signals</p></div></div>
+      <div class="section-chip"><div class="section-num">3</div><div><h4>Buyer Committee Map</h4><p>5 personas with pain &amp; message angle</p></div></div>
+      <div class="section-chip"><div class="section-num">4</div><div><h4>Pain-to-Value Mapping</h4><p>Pain → impact → capability → proof needed</p></div></div>
+      <div class="section-chip"><div class="section-num">5</div><div><h4>Positioning</h4><p>One-sentence positioning + why now</p></div></div>
+      <div class="section-chip"><div class="section-num">6</div><div><h4>Landing Page Copy</h4><p>Hero, features, FAQ, CTA — full English</p></div></div>
+      <div class="section-chip"><div class="section-num">7</div><div><h4>SDR / BDR Outbound</h4><p>3 emails + 3 LinkedIn + 3 voicemails</p></div></div>
+      <div class="section-chip"><div class="section-num">8</div><div><h4>LinkedIn ABM Content</h4><p>20 posts across 4 content formats</p></div></div>
+      <div class="section-chip"><div class="section-num">9</div><div><h4>Sales One-Pager</h4><p>Print-ready one-page sales document</p></div></div>
+      <div class="section-chip"><div class="section-num">10</div><div><h4>Discovery Questions</h4><p>9 topic areas, 3–5 questions each</p></div></div>
+      <div class="section-chip"><div class="section-num">11</div><div><h4>Demo Script</h4><p>Flow, objection moments, closing CTA</p></div></div>
+      <div class="section-chip"><div class="section-num">12</div><div><h4>Objection Handling</h4><p>8 common objections with scripts</p></div></div>
+      <div class="section-chip"><div class="section-num">13</div><div><h4>Pricing Packaging</h4><p>Starter / Growth / Pro with upgrade triggers</p></div></div>
+      <div class="section-chip"><div class="section-num">14</div><div><h4>Security &amp; Trust Messaging</h4><p>What to claim, compliance warnings</p></div></div>
+      <div class="section-chip"><div class="section-num">15</div><div><h4>30-Day GTM Launch Plan</h4><p>Week-by-week tasks and success metrics</p></div></div>
+      <div class="section-chip"><div class="section-num">16</div><div><h4>Next Version Suggestions</h4><p>Product and GTM improvements for V2</p></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- STACK -->
+<section>
+  <div class="container">
+    <div class="section-label">Tech Stack</div>
+    <div class="section-title">Built with modern, production-grade tools</div>
+    <div class="section-sub" style="margin-bottom: 36px;">Full-stack TypeScript + Python, with OpenAI Agents SDK and DeepSeek — no OpenAI key required.</div>
+    <div class="stack-grid">
+      <div class="stack-card">
+        <div class="layer">Frontend</div>
+        <ul>
+          <li><strong>Next.js 14</strong> App Router</li>
+          <li><strong>TypeScript</strong></li>
+          <li><strong>Tailwind CSS</strong></li>
+          <li><strong>Framer Motion</strong></li>
+          <li><strong>react-markdown</strong></li>
+          <li>lucide-react · Radix UI</li>
+        </ul>
+      </div>
+      <div class="stack-card">
+        <div class="layer">Backend</div>
+        <ul>
+          <li><strong>Python 3.11</strong></li>
+          <li><strong>FastAPI</strong></li>
+          <li><strong>OpenAI Agents SDK</strong></li>
+          <li><strong>Pydantic v2</strong></li>
+          <li>CORS · dotenv</li>
+        </ul>
+      </div>
+      <div class="stack-card">
+        <div class="layer">AI Model</div>
+        <ul>
+          <li><strong>DeepSeek V3</strong></li>
+          <li>OpenAI-compatible API</li>
+          <li>No OpenAI key needed</li>
+          <li>max_tokens 16,000</li>
+          <li>Tracing disabled</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- AUTHORS -->
+<section class="authors-bg">
+  <div class="container">
+    <div class="section-label">Authors</div>
+    <div class="section-title" style="margin-bottom: 28px;">Built by</div>
+    <div class="authors-inner">
+      <a class="author-card" href="https://github.com/Becky-Dai" target="_blank" rel="noopener">
+        <div class="author-avatar">BD</div>
+        <div>
+          <div class="author-name">Becky Dai</div>
+          <div class="author-handle">@Becky-Dai</div>
+        </div>
+      </a>
+      <a class="author-card" href="https://github.com/iamaliceliu" target="_blank" rel="noopener">
+        <div class="author-avatar">AL</div>
+        <div>
+          <div class="author-name">Alice Liu</div>
+          <div class="author-handle">@iamaliceliu</div>
+        </div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <p>
+      <a href="https://github.com/Becky-Dai/FinGTM-Agent" target="_blank" rel="noopener">FinGTM Agent</a>
+      · Open source · MIT License ·
+      All generated GTM content should be reviewed by a qualified practitioner before production use.
+    </p>
+  </div>
+</footer>
+
+</body>
+</html>
