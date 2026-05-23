@@ -16,14 +16,14 @@ import {
 } from "lucide-react";
 
 const NAV_ITEMS = [
-  { id: "overview",  icon: LayoutDashboard, label: "Overview",       active: true },
-  { id: "inputs",    icon: FileText,        label: "Product Inputs" },
-  { id: "icp",       icon: Users,           label: "ICP & Buyers" },
-  { id: "messaging", icon: MessageSquare,   label: "Messaging" },
-  { id: "outbound",  icon: Send,            label: "Outbound" },
-  { id: "sales",     icon: Briefcase,       label: "Sales Assets" },
-  { id: "trust",     icon: ShieldCheck,     label: "Trust Review" },
-  { id: "export",    icon: Download,        label: "Export" },
+  { id: "overview",  icon: LayoutDashboard, label: "Overview",       anchor: "workspace-overview" },
+  { id: "inputs",    icon: FileText,        label: "Product Inputs",  anchor: "workspace-inputs" },
+  { id: "icp",       icon: Users,           label: "ICP & Buyers",   anchor: "workspace-report" },
+  { id: "messaging", icon: MessageSquare,   label: "Messaging",       anchor: "workspace-report" },
+  { id: "outbound",  icon: Send,            label: "Outbound",        anchor: "workspace-report" },
+  { id: "sales",     icon: Briefcase,       label: "Sales Assets",   anchor: "workspace-report" },
+  { id: "trust",     icon: ShieldCheck,     label: "Trust Review",   anchor: "workspace-trust" },
+  { id: "export",    icon: Download,        label: "Export",          anchor: "workspace-export" },
 ];
 
 interface SidebarProps {
@@ -31,8 +31,11 @@ interface SidebarProps {
   onClose: () => void;
 }
 
+function scrollTo(anchorId: string) {
+  document.getElementById(anchorId)?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
-  // Close on Escape key
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -60,8 +63,9 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           isOpen ? "translate-x-0" : "-translate-x-full",
           "lg:relative lg:translate-x-0 lg:z-auto lg:flex-shrink-0",
         ].join(" ")}
+        aria-label="Workspace navigation"
       >
-        {/* Logo row — matches main header height */}
+        {/* Logo row */}
         <div className="flex items-center justify-between px-4 h-[52px] border-b border-slate-200 flex-shrink-0">
           <div className="flex items-center gap-2">
             <div className="w-[26px] h-[26px] rounded-md bg-blue-600 flex items-center justify-center flex-shrink-0">
@@ -71,8 +75,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               FinGTM Agent
             </span>
           </div>
-          {/* Close button — mobile only */}
           <button
+            type="button"
             onClick={onClose}
             className="lg:hidden p-1 rounded text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
             aria-label="Close navigation"
@@ -82,25 +86,28 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-2.5 py-3 space-y-0.5 overflow-y-auto">
-          {NAV_ITEMS.map((item) => (
-            <div
+        <nav className="flex-1 px-2.5 py-3 space-y-0.5 overflow-y-auto" aria-label="Workspace sections">
+          {NAV_ITEMS.map((item, i) => (
+            <button
               key={item.id}
+              type="button"
+              aria-label={`Go to ${item.label}`}
+              onClick={() => scrollTo(item.anchor)}
               className={[
-                "flex items-center gap-2.5 px-3 py-2 rounded-lg select-none cursor-default",
-                "text-[13px] transition-colors duration-100",
-                item.active
+                "w-full flex items-center gap-2.5 px-3 py-2 rounded-lg",
+                "text-[13px] transition-colors duration-100 text-left",
+                i === 0
                   ? "bg-blue-50 text-blue-700 font-medium"
                   : "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
               ].join(" ")}
             >
               <item.icon
                 className={`h-4 w-4 flex-shrink-0 ${
-                  item.active ? "text-blue-600" : "text-slate-400"
+                  i === 0 ? "text-blue-600" : "text-slate-400"
                 }`}
               />
               {item.label}
-            </div>
+            </button>
           ))}
         </nav>
 
@@ -113,7 +120,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
             <div className="text-[13px] font-medium text-slate-700 leading-snug">
               FinGTM Demo
             </div>
-            <div className="text-[11px] text-slate-400 mt-0.5">
+            <div className="text-[11px] text-slate-500 mt-0.5">
               Local project
             </div>
           </div>

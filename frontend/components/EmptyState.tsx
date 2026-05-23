@@ -107,8 +107,8 @@ export default function EmptyState() {
         </span>
       </div>
 
-      {/* GTM module cards — 2×2 grid */}
-      <div className="grid grid-cols-2 gap-2.5">
+      {/* GTM module cards — responsive grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
         {GTM_MODULES.map((mod, i) => (
           <motion.div
             key={mod.title}
@@ -128,7 +128,7 @@ export default function EmptyState() {
             <h3 className="text-[12px] font-semibold text-slate-800 mb-1 leading-snug">
               {mod.title}
             </h3>
-            <p className="text-[11px] text-slate-400 leading-relaxed">
+            <p className="text-[11px] text-slate-500 leading-relaxed">
               {mod.description}
             </p>
           </motion.div>
@@ -143,7 +143,7 @@ export default function EmptyState() {
           </span>
           <span className="text-[11px] text-slate-400">16 sections</span>
         </div>
-        <div className="p-4 grid grid-cols-2 gap-x-8 gap-y-4">
+        <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
           {REPORT_GROUPS.map((group) => (
             <div key={group.label}>
               <div className="flex items-center gap-1.5 mb-2">

@@ -232,11 +232,34 @@ Open: **http://localhost:3000**
 
 ---
 
+## Deployment & Security Notes
+
+> **This is a local MVP / portfolio project.** The backend is not hardened for public deployment.  
+> Before exposing the backend to the internet, review and address the items below.
+
+| Requirement | Status | Action |
+|---|---|---|
+| Rate limiting on `/api/generate-gtm-pack` | **Not implemented** | Add `slowapi` or a reverse-proxy rate limit before public deployment |
+| Backend authentication | **Not implemented** | Add a shared-secret header (`X-API-Key`) or token gate before going public |
+| CORS origin configuration | Configurable via env | Set `ALLOWED_ORIGIN=https://your-domain.com` in backend environment |
+| API key isolation | Done | `DEEPSEEK_API_KEY` is read server-side only — never set it in the frontend |
+| Error message safety | Done | Backend exceptions are logged server-side; only safe text is returned to the client |
+| Content disclaimer | Done | All generated content is labeled "For strategic reference only" |
+
+**Key rules:**
+- Keep `DEEPSEEK_API_KEY` in backend environment variables only — never in frontend code or `.env` files committed to git
+- Set `ALLOWED_ORIGIN` to your production frontend URL before deploying — do not use `*`
+- Add rate limiting before public deployment — each request can cost significant DeepSeek API credits
+- Add authentication (shared secret or session token) before public deployment — the endpoint is unauthenticated by default
+- Generated content is strategic reference only — not legal, financial, regulatory, or compliance advice
+
+---
+
 ## Security Notes
 
 - `DEEPSEEK_API_KEY` is read server-side only — never sent to the browser
 - All AI calls go through FastAPI — the frontend never calls DeepSeek directly
-- CORS is restricted to `http://localhost:3000` — update `allow_origins` in `main.py` for production
+- CORS origin is configured via `ALLOWED_ORIGIN` env var (default: `http://localhost:3000`)
 - No database, no authentication — local development and demo tool only
 - `.env` is in `.gitignore` — never commit your API key
 

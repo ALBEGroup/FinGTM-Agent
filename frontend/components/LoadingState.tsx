@@ -43,7 +43,7 @@ export default function LoadingState() {
           <h2 className="text-sm font-semibold text-slate-900">
             Generating GTM Pack
           </h2>
-          <p className="text-[11px] text-slate-400 mt-0.5">
+          <p className="text-[11px] text-slate-500 mt-0.5">
             DeepSeek agent · 16 sections
           </p>
         </div>
@@ -75,7 +75,7 @@ export default function LoadingState() {
               <span
                 className={`text-[13px] leading-snug transition-colors duration-300 ${
                   isCompleted
-                    ? "text-slate-400 line-through decoration-slate-300"
+                    ? "text-slate-400"
                     : isActive
                     ? "text-slate-900 font-medium"
                     : "text-slate-300"
@@ -90,7 +90,7 @@ export default function LoadingState() {
 
       {/* Footer */}
       <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/60">
-        <p className="text-[11px] text-slate-400 text-center">
+        <p className="text-[11px] text-slate-500 text-center">
           Typically 45–90 seconds · Complex inputs may take longer
         </p>
       </div>

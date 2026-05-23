@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { History, X } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import ProductInputForm from "@/components/ProductInputForm";
 import GTMReport from "@/components/GTMReport";
@@ -14,17 +15,58 @@ import GuardrailsPanel from "@/components/GuardrailsPanel";
 import { generateGTMPack } from "@/lib/api";
 import type { ProductInput, GenerationState } from "@/lib/types";
 
+const LS_REPORT_KEY = "fingtm_last_report";
+const LS_DATE_KEY = "fingtm_last_generated_at";
+
+function formatDate(iso: string): string {
+  try {
+    return new Date(iso).toLocaleString(undefined, {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  } catch {
+    return "";
+  }
+}
+
 export default function HomePage() {
   const [state, setState] = useState<GenerationState>("idle");
   const [markdown, setMarkdown] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [loadSampleSignal, setLoadSampleSignal] = useState(0);
 
-  // Holds the current in-flight request controller so we can cancel it on re-submit or reset
+  // localStorage restore banner
+  const [restoreMarkdown, setRestoreMarkdown] = useState<string | null>(null);
+  const [restoreDate, setRestoreDate] = useState<string>("");
+
   const abortRef = useRef<AbortController | null>(null);
 
+  // On mount: check for a previously saved report
+  useEffect(() => {
+    const saved = localStorage.getItem(LS_REPORT_KEY);
+    const savedAt = localStorage.getItem(LS_DATE_KEY);
+    if (saved && saved.trim()) {
+      setRestoreMarkdown(saved);
+      setRestoreDate(savedAt ? formatDate(savedAt) : "");
+    }
+  }, []);
+
+  function handleRestore() {
+    if (!restoreMarkdown) return;
+    setMarkdown(restoreMarkdown);
+    setState("success");
+    setRestoreMarkdown(null);
+  }
+
+  function handleDismissRestore() {
+    localStorage.removeItem(LS_REPORT_KEY);
+    localStorage.removeItem(LS_DATE_KEY);
+    setRestoreMarkdown(null);
+  }
+
   async function handleGenerate(input: ProductInput) {
-    // Cancel any in-flight request before starting a new one
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
@@ -32,15 +74,19 @@ export default function HomePage() {
     setState("loading");
     setMarkdown("");
     setErrorMessage("");
+    // Hide restore banner once user starts generating
+    setRestoreMarkdown(null);
 
     const result = await generateGTMPack(input, controller.signal);
 
-    // Ignore stale result if this request was already superseded
     if (controller.signal.aborted) return;
 
     if (result.success && result.markdown) {
       setMarkdown(result.markdown);
       setState("success");
+      // Persist to localStorage
+      localStorage.setItem(LS_REPORT_KEY, result.markdown);
+      localStorage.setItem(LS_DATE_KEY, new Date().toISOString());
     } else {
       setErrorMessage(result.error ?? "Unknown error occurred.");
       setState("error");
@@ -65,20 +111,19 @@ export default function HomePage() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    // Delay revoke slightly to allow Safari to read the blob
     setTimeout(() => URL.revokeObjectURL(url), 100);
   }
 
   return (
     <AppShell>
       {/* Workspace descriptor bar */}
-      <div className="py-4 border-b border-slate-200/60">
+      <div id="workspace-overview" className="py-4 border-b border-slate-200/60">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
           <div>
             <h1 className="text-[14px] font-semibold text-slate-800 leading-snug">
               Build a B2B FinTech GTM Pack
             </h1>
-            <p className="text-[11px] text-slate-400 mt-0.5 hidden sm:block">
+            <p className="text-[11px] text-slate-500 mt-0.5 hidden sm:block">
               Map ICP, buyer committee, positioning, outbound sequences, and trust messaging — 16 sections in one run.
             </p>
           </div>
@@ -88,6 +133,44 @@ export default function HomePage() {
         </div>
       </div>
 
+      {/* Restore banner — only shown when a previous report exists and user is idle */}
+      {restoreMarkdown && state === "idle" && (
+        <div className="pt-3">
+          <div className="flex items-center justify-between gap-3 px-4 py-3 bg-amber-50 border border-amber-200 rounded-xl">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <History className="h-4 w-4 text-amber-500 flex-shrink-0" />
+              <div className="min-w-0">
+                <span className="text-[13px] font-medium text-amber-800">
+                  A previous GTM pack is available
+                </span>
+                {restoreDate && (
+                  <span className="text-[11px] text-amber-600 ml-2">
+                    {restoreDate}
+                  </span>
+                )}
+              </div>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <button
+                type="button"
+                onClick={handleRestore}
+                className="px-3 py-1.5 text-[12px] font-medium rounded-md bg-amber-600 text-white hover:bg-amber-700 transition-colors"
+              >
+                Restore
+              </button>
+              <button
+                type="button"
+                onClick={handleDismissRestore}
+                aria-label="Dismiss restore banner"
+                className="p-1.5 rounded-md text-amber-500 hover:bg-amber-100 transition-colors"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* KPI metrics bar */}
       <div className="py-4">
         <WorkspaceMetrics state={state} />
@@ -96,7 +179,7 @@ export default function HomePage() {
       {/* Two-column workspace */}
       <div className="flex flex-col lg:flex-row gap-5 pb-8">
         {/* Left: input panel — sticky */}
-        <aside className="w-full lg:w-[380px] lg:flex-shrink-0">
+        <aside id="workspace-inputs" className="w-full lg:w-[380px] lg:flex-shrink-0">
           <div className="lg:sticky lg:top-4">
             <ProductInputForm
               onSubmit={handleGenerate}
@@ -115,7 +198,9 @@ export default function HomePage() {
               onLoadSample={() => setLoadSampleSignal((s) => s + 1)}
               onDownload={state === "success" ? handleDownload : undefined}
             />
-            <GuardrailsPanel state={state} />
+            <div id="workspace-trust">
+              <GuardrailsPanel state={state} />
+            </div>
           </div>
 
           {/* State-driven workspace content */}

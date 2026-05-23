@@ -179,13 +179,18 @@ function FormField({
   const errorBorder = "border border-red-300 focus:ring-red-500/20 focus:border-red-400";
   const inputClass = `${baseClass} ${hasError ? errorBorder : normalBorder}`;
 
+  const fieldId = `field-${String(field.key)}`;
   return (
     <div className="space-y-1.5">
-      <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+      <label
+        htmlFor={fieldId}
+        className="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider"
+      >
         {field.label}
       </label>
       {field.type === "textarea" ? (
         <textarea
+          id={fieldId}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={field.placeholder}
@@ -194,6 +199,7 @@ function FormField({
         />
       ) : (
         <input
+          id={fieldId}
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
