@@ -10,42 +10,50 @@ from schemas import ProductInput
 set_tracing_disabled(True)
 
 AGENT_INSTRUCTIONS = """
-You are a senior B2B SaaS FinTech GTM strategist with deep expertise in:
+You are a senior B2B SaaS / FinTech GTM strategist with deep expertise in:
 - B2B SaaS positioning and messaging architecture
 - FinTech product marketing: payments, invoicing, cash flow, subscription billing, treasury, CFO tools
-- ICP definition and buyer committee mapping
-- SDR/BDR outbound strategy and cold email copywriting
-- Sales enablement: one-pagers, discovery scripts, demo scripts
-- Enterprise objection handling and ROI messaging
-- Security and trust messaging for finance software
-- Early-stage SaaS go-to-market planning and pricing packaging strategy
+- ICP definition, firmographic targeting, and buyer committee mapping
+- SDR/BDR outbound strategy, cold email copywriting, and LinkedIn outreach
+- Sales enablement: discovery scripts, objection handling playbooks, pricing strategy
+- Enterprise trust and security messaging for finance software
 
 LANGUAGE RULES:
 - Write all section headers in English
-- Write all customer-facing content in English: emails, LinkedIn posts, landing page copy, scripts, FAQs
-- Write strategic analysis and B2B logic explanations in Chinese (simplified Chinese)
+- Write all customer-facing content in English: emails, LinkedIn posts, messaging, scripts
+- Write strategic analysis, reasoning, and B2B logic explanations in Chinese (simplified)
 
 CONTENT RULES (MANDATORY):
 - Do NOT fabricate customer case studies, testimonials, or named customers
-- Do NOT claim specific ROI percentages without user-provided basis
-- Do NOT make regulatory claims (SOC2, ISO27001, GDPR, PCI-DSS) unless user specified
+- Do NOT claim specific ROI percentages unless the user provided data
+- Do NOT make regulatory claims (SOC2, ISO27001, GDPR, PCI-DSS) unless user specified them
 - Do NOT claim the product is a bank, licensed financial adviser, or payment processor
-- Do NOT use: guaranteed revenue, guaranteed compliance, risk-free, 100% accurate AI
-- Keep security messaging qualified: use 'designed with', 'built to support', 'helps teams manage'
-- Be specific to the product input, avoid generic SaaS platitudes
-- Think like a B2B revenue practitioner, not a generic content marketer
+- Do NOT use: guaranteed, risk-free, 100% accurate, best-in-class (unless user provided proof)
+- Mark any unverifiable estimates or assumptions as [ASSUMPTION]
+- Keep security messaging qualified: use "designed to support", "built to help", "helps teams manage"
+- Be specific to the product input — avoid generic SaaS platitudes
+- Think like a B2B revenue practitioner, not a generic content writer
+
+QUALITY RULES:
+- ICP must include specific firmographic criteria, not vague generalisations
+- Buyer personas must include: Title, Day-in-life summary, Primary goal, Key pain points, Objections, Message angle
+- Cold emails must NOT open with "I hope this email finds you well" or any similar filler phrase
+- LinkedIn connection requests must be UNDER 300 characters each
+- Objection responses must sound like a real sales conversation, not a FAQ page
+- GTM Action Plan must have clearly separated 30-day, 60-day, and 90-day sections
 
 OUTPUT FORMAT:
-Generate a complete GTM report in Markdown titled '# FinGTM Report' with all 16 sections.
-Each section must be thorough, specific, and immediately actionable.
-IMPORTANT: You must complete ALL 16 sections. Do not stop early.
+Generate a complete GTM report in Markdown starting with '# FinGTM Report'.
+Each section must use the format: ## N. [Section Title]
+CRITICAL: You must output ALL 16 sections completely. Do not stop early or truncate any section.
 """
 
 
 def build_user_prompt(product: ProductInput) -> str:
     return f"""
-Please generate a complete FinGTM Report based on the following product information.
+Generate a complete FinGTM Report for the following product. Output all 16 sections without stopping.
 
+---
 Product Name: {product.product_name}
 Product Category: {product.product_category}
 Target Company Size: {product.target_company_size}
@@ -62,74 +70,201 @@ Security / Compliance Sensitivity: {product.security_compliance_sensitivity}
 Pricing Assumption: {product.pricing_assumption}
 Target Market: {product.target_market}
 Tone: {product.tone}
-
-Generate the complete report with all 16 sections. Be concise but complete for each section.
+---
 
 # FinGTM Report
 
-## 1. Executive Summary
-Product summary, target market, core GTM recommendation, main commercial risk, main opportunity.
-(Brief analysis in Chinese; content in English)
+## 1. Executive GTM Summary
+Write 2–3 paragraphs covering: what the product does, who it is built for, the core GTM hypothesis,
+the primary commercial opportunity, and the biggest risk to watch.
+(Strategic framing in Chinese; executive summary paragraph in English)
 
-## 2. ICP Definition
-Ideal customer profile, company size, industry segment, budget signal, urgency signal, poor-fit signals.
-(Analysis in Chinese; ICP in English)
+## 2. Product Positioning
+- One-sentence positioning statement using this template:
+  "For [target customer] who [pain], [product name] is a [category] that [key benefit]. Unlike [alternatives], we [differentiator]."
+- Product category and positioning angle (e.g. workflow tool, intelligence layer, infrastructure)
+- Three alternative positioning angles with trade-offs for each
+- Key differentiation: what this product does that alternatives cannot
+- Why now: what market timing or urgency driver makes this the right moment
+(Analysis in Chinese; all positioning copy in English)
 
-## 3. Buyer Committee Map
-For each of 5 personas (Economic Buyer, Technical Evaluator, Daily User, Champion, Procurement):
-role, concerns, pain, objection, message angle.
+## 3. Target Market Overview
+- Primary market segment and geography
+- Target company profile: industry, size (employees + ARR range), growth stage, tech maturity
+- Market timing factors: regulatory, economic, or technology trends driving demand
+- Key market entry strategy recommendation (direct outbound, partnerships, PLG, community)
+- 3–5 market readiness signals: how to tell if a company is in-market now
+(Analysis in Chinese)
 
-## 4. Pain-to-Value Mapping
-Markdown table: Current Pain | Business Impact | Product Capability | Value Message | Proof Needed
+## 4. Ideal Customer Profile (ICP)
+Provide a specific, actionable ICP:
+- Firmographic criteria: industry, company size (employees + revenue range [ASSUMPTION if estimated]),
+  geography, tech stack signals (e.g. uses Stripe, Xero, or similar)
+- Behavioural signals: growth stage, hiring patterns, recent funding, events that indicate readiness
+- Budget signals: spending patterns or budget triggers that indicate willingness to buy
+- Urgency signals: what specific events cause a company to seek a solution right now
+- Qualification questions: 5 questions to qualify a lead in the first discovery call
+- Poor-fit signals: who to de-prioritise and why
+(Analysis in Chinese; ICP criteria in English)
 
-## 5. Positioning
-One-sentence positioning, category, 3 alternative angles, key differentiation, why now.
+## 5. Buyer Personas
+For each of the 5 personas below, provide a structured profile:
+**Title** | **Day-in-life** (2 sentences) | **Primary goal** | **Top 3 pain points** |
+**Key objections** (2–3) | **Message angle** | **Best outreach channel**
 
-## 6. Landing Page Copy
-Hero headline, subheadline, primary CTA, secondary CTA, problem section (3 pains), solution section,
-feature section (3-5 features), use case section (2 use cases), trust section, FAQ (5 Q&As), final CTA.
+Personas to cover:
+1. Economic Buyer (controls budget and final sign-off)
+2. Champion (internal advocate who drives the deal forward)
+3. Technical Evaluator (assesses integration, security, and implementation)
+4. End User (uses the product day-to-day)
+5. Procurement / Legal (manages contract review and compliance)
 
-## 7. SDR / BDR Outbound Sequence
-3 cold emails (subject + body), 3 LinkedIn connection messages, 3 LinkedIn follow-ups,
-3 voicemail scripts, personalisation tokens list.
+(Analysis in Chinese; all persona content in English)
 
-## 8. LinkedIn ABM Content
-5 founder posts, 5 company page posts, 5 thought-leadership hooks, 5 buyer pain posts.
+## 6. Pain Points and Buying Triggers
+Markdown table with columns:
+| Current Pain | Business Impact | What Triggers Purchase | Urgency Level |
 
-## 9. Sales One-Pager
-Product summary, who it is for, problems solved, key capabilities, business outcomes, use cases,
-why choose this, CTA.
+Include 6–8 rows covering the core pain dimensions for this product.
+Urgency Level: High / Medium / Low.
 
-## 10. Discovery Call Questions
-3 questions each for: current workflow, pain severity, business impact, existing tools,
-decision process, timeline, budget, security/integration, success criteria.
+Below the table, list the top 3 specific buying trigger events that make a company ready to purchase NOW,
+and explain why each creates urgency.
 
-## 11. Demo Script
-Opening, discovery recap, demo flow (steps with feature-to-value narration), 3 objection moments, closing CTA.
+## 7. Value Proposition
+- Core value proposition statement (2–3 sentences, specific and outcome-focused)
+- 3 supporting proof points (measurable outcomes preferred; mark estimates as [ASSUMPTION])
+- Before/After narrative: what the customer's workflow looks like before vs. after adopting this product
+- One-line value prop tailored for each buyer persona type
+- Single-line variants for: website hero, sales email subject line, LinkedIn post hook
 
-## 12. Objection Handling
-For each objection: what it means (Chinese), response script (English), follow-up question.
-Cover: Excel, Xero/QuickBooks/Stripe, no budget, data security, not ready for AI,
-need integrations, too complex, too small.
+## 8. Competitive Landscape
+Markdown table with columns:
+| Alternative | Who Uses It | Strengths | Weaknesses | Displacement Angle |
 
-## 13. Pricing Packaging
-3 tiers (Starter / Growth / Pro): best for, included features, not included, pricing logic,
-upgrade trigger, sales note.
+Cover all alternatives mentioned by the user plus obvious market incumbents.
 
-## 14. Security & Trust Messaging
-What can be claimed, what not to claim, 5 trust phrases, security FAQ (5 Q&As),
-3 compliance wording warnings.
+For the top 2 competitors, write a 2-sentence displacement strategy:
+how to win a deal where the prospect is already using that tool.
 
-## 15. 30-Day GTM Launch Plan
-Week 1 (positioning/ICP), Week 2 (assets), Week 3 (outreach), Week 4 (demo/iteration).
-Each week: tasks, deliverables, success metrics.
+## 9. Differentiation Strategy
+- Top 3 unique capabilities that competitors cannot easily replicate
+- Feature-level comparison table: Capability | This Product | Alternative A | Alternative B
+- Positioning moat: what makes this product defensible over 12–18 months
+- "Why us over [X]" messaging guide for the top 2 competitors
+  (2–3 talking points for each, in English, for sales conversations)
 
-## 16. Next Version Suggestions
-Product improvements, integrations, GTM automations, V2 agent capabilities.
+## 10. Pricing and Packaging
+Three tiers (Starter / Growth / Pro or equivalent names suited to the product):
+For each tier:
+- Best for (customer segment)
+- Core features included
+- Notable exclusions
+- Pricing logic / range
+- Upgrade trigger (what behaviour or need prompts an upgrade)
+- Sales note (how to position this tier in a conversation)
+
+Also include:
+- Recommended pricing motion: self-serve vs. sales-assisted and why
+- Annual vs. monthly billing recommendation
+- Free trial or freemium recommendation with rationale
+
+## 11. Sales Messaging Framework
+- Headline sales message (1 sentence — what you lead with in any sales context)
+- Elevator pitch (30-second spoken version, natural conversational language)
+- SDR cold call talk track:
+  Opening (30 seconds) → pivot to value → close to meeting ask
+- Demo opening statement (how to start a product demo to maximise engagement)
+- Email subject line options: provide 5 variants, labelled A–E, for A/B testing
+- Leading proof point for each buyer persona (what to emphasise when talking to each)
+
+## 12. LinkedIn Outreach
+**Connection Request Messages (MUST be under 300 characters each):**
+- 3 connection requests for the Economic Buyer persona
+- 3 connection requests for the Champion persona
+
+**Follow-up Messages (after connection accepted):**
+- 3 follow-up messages that lead with value or insight, not a pitch
+
+**Content Hooks for Organic Content:**
+- 5 post hooks for founder thought leadership (share insights, not product pitches)
+- 3 post hooks designed to resonate with buyer pain points
+
+## 13. Cold Email Sequence
+Three emails for a complete outbound sequence. Each email must have a Subject and Body.
+
+**Email 1 — First Touch:**
+Subject: [subject line]
+Body: [Specific, relevant hook. Do NOT open with "I hope this email finds you well" or similar filler.
+Reference a relevant pain or trigger. Clear value in 3–4 sentences. Soft CTA.]
+
+**Email 2 — Follow-Up (3–5 days later):**
+Subject: [subject line]
+Body: [New angle — add insight, a relevant trend, or a brief proof point. Keep it short. CTA.]
+
+**Email 3 — Breakup Email (7–10 days later):**
+Subject: [subject line]
+Body: [Honest, brief, no pressure. Leaves the door open for future timing. Under 5 sentences.]
+
+**Personalisation tokens:** List the tokens a rep should customise before sending
+(e.g. {{company_name}}, {{recent_trigger}}, {{industry_pain}})
+
+## 14. Discovery Call Questions
+Questions to ask in a first 30-minute discovery call, grouped by category (3 questions each):
+
+**Current Workflow** — understand how they work today
+**Pain Severity** — qualify how painful the problem really is
+**Business Impact** — quantify the cost of the problem
+**Existing Tools & Integration** — assess the tech stack and switching cost
+**Decision Process & Stakeholders** — map the buying committee
+**Timeline & Budget** — qualify urgency and commercial viability
+
+Also include: 3 questions specifically designed to identify whether this is a qualified ICP fit
+(questions that reveal poor-fit early before investing more time).
+
+## 15. Objection Handling Playbook
+For each objection, provide:
+1. What the objection really means (in Chinese — the underlying concern)
+2. Response script (in English — conversational, not robotic, 3–5 sentences)
+3. Follow-up question to keep the conversation moving forward
+
+Objections to cover:
+1. "We already use [Excel / Xero / QuickBooks / Stripe]"
+2. "We don't have budget right now"
+3. "We're not sure about data security / where our data goes"
+4. "We're not ready for AI in our finance workflow"
+5. "We need this to integrate with [specific tool]"
+6. "This seems too complex for our team to implement"
+7. "We're too small / too early for this right now"
+8. "We need to get more stakeholders involved before we decide"
+
+## 16. GTM Action Plan (30 / 60 / 90 Days)
+
+### Days 1–30: Foundation
+**Goal:** [what to validate or establish]
+**Key tasks:** (5–7 bullet points)
+**Deliverables:** (what should exist by end of day 30)
+**Success metrics:** (2–3 measurable indicators)
+
+### Days 31–60: Activation
+**Goal:** [what to launch or accelerate]
+**Key tasks:** (5–7 bullet points)
+**Deliverables:** (what should exist by end of day 60)
+**Success metrics:** (2–3 measurable indicators)
+
+### Days 61–90: Scale
+**Goal:** [what to optimise or expand]
+**Key tasks:** (5–7 bullet points)
+**Deliverables:** (what should exist by end of day 90)
+**Success metrics:** (2–3 measurable indicators)
+
+**Leading indicators to track across all 90 days:** (top 3)
+**Warning signs that signal the GTM motion needs to pivot:** (3–4 signals)
 
 ---
-Keep each section focused and actionable. Marketing copy in English, analysis in Chinese.
-Complete all 16 sections without stopping early.
+Output all 16 sections completely. Customer-facing content and copy in English.
+Strategic analysis and B2B reasoning in Chinese (simplified).
+Never stop early. Never add commentary outside the report structure.
 """
 
 
