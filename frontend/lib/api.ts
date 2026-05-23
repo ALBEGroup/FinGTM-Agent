@@ -4,11 +4,15 @@ import type { ProductInput, GTMApiResponse } from "./types";
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 export async function generateGTMPack(
-  input: ProductInput
+  input: ProductInput,
+  externalSignal?: AbortSignal
 ): Promise<GTMApiResponse> {
-  // Use AbortController for broad browser compatibility (AbortSignal.timeout is newer)
+  // Internal 180-second timeout controller
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 180_000);
+
+  // Forward external abort (e.g. user-initiated cancel / regenerate) to internal controller
+  externalSignal?.addEventListener("abort", () => controller.abort(), { once: true });
 
   try {
     const response = await fetch(`${API_BASE_URL}/api/generate-gtm-pack`, {
@@ -31,15 +35,20 @@ export async function generateGTMPack(
     clearTimeout(timeoutId);
     if (err instanceof Error) {
       if (err.name === "AbortError") {
-        return { success: false, error: "Request timed out after 3 minutes. The GTM report is large — please try again." };
+        // Distinguish user-cancelled from timeout
+        if (externalSignal?.aborted) {
+          return { success: false, error: "Request cancelled." };
+        }
+        return {
+          success: false,
+          error: "Request timed out after 3 minutes. The GTM report is large — please try again.",
+        };
       }
-      // Network error — backend unreachable
       if (err.name === "TypeError") {
         return {
           success: false,
           error:
-            "Cannot connect to backend at http://localhost:8000. " +
-            "Please check: (1) uvicorn is running, (2) DEEPSEEK_API_KEY is set, (3) try refreshing and clicking Generate again.",
+            "Cannot connect to the backend. Please check that the server is running and try again.",
         };
       }
       return { success: false, error: err.message };

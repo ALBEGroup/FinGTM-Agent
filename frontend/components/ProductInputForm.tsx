@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Sparkles, Trash2, FlaskConical, Loader2, ChevronDown } from "lucide-react";
+import { Sparkles, Trash2, FlaskConical, Loader2, ChevronDown, AlertCircle } from "lucide-react";
 import type { ProductInput } from "@/lib/types";
 import { PAYFLOW_SAMPLE, EMPTY_FORM } from "@/lib/sampleData";
 
@@ -28,7 +28,6 @@ type SectionDef = {
   fields: FieldDef[];
 };
 
-// 16 fields reorganised into 4 workflow-oriented sections
 const FORM_SECTIONS: SectionDef[] = [
   {
     id: "01",
@@ -167,13 +166,18 @@ function FormField({
   field,
   value,
   onChange,
+  hasError,
 }: {
   field: FieldDef;
   value: string;
   onChange: (val: string) => void;
+  hasError?: boolean;
 }) {
-  const inputClass =
-    "w-full px-3 py-2 text-[13px] text-slate-800 bg-white border border-slate-200 rounded-lg placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all leading-relaxed";
+  const baseClass =
+    "w-full px-3 py-2 text-[13px] text-slate-800 bg-white rounded-lg placeholder:text-slate-400 focus:outline-none focus:ring-2 transition-all leading-relaxed";
+  const normalBorder = "border border-slate-200 focus:ring-blue-500/20 focus:border-blue-400";
+  const errorBorder = "border border-red-300 focus:ring-red-500/20 focus:border-red-400";
+  const inputClass = `${baseClass} ${hasError ? errorBorder : normalBorder}`;
 
   return (
     <div className="space-y-1.5">
@@ -197,6 +201,12 @@ function FormField({
           className={inputClass}
         />
       )}
+      {hasError && (
+        <p className="text-[11px] text-red-500 flex items-center gap-1">
+          <AlertCircle className="h-3 w-3 flex-shrink-0" />
+          This field is required.
+        </p>
+      )}
     </div>
   );
 }
@@ -205,19 +215,35 @@ function FormSection({
   section,
   formData,
   onChange,
+  initialOpen,
+  errorFieldKey,
 }: {
   section: SectionDef;
   formData: ProductInput;
   onChange: (key: keyof ProductInput, val: string) => void;
+  initialOpen?: boolean;
+  errorFieldKey?: keyof ProductInput | null;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(initialOpen ?? false);
   const filledInSection = section.fields.filter(
     (f) => formData[f.key]?.trim()
   ).length;
   const isComplete = filledInSection === section.fields.length;
+  const hasErrorInSection = errorFieldKey
+    ? section.fields.some((f) => f.key === errorFieldKey)
+    : false;
+
+  // Auto-open section when it contains the errored field
+  useEffect(() => {
+    if (hasErrorInSection) setOpen(true);
+  }, [hasErrorInSection]);
 
   return (
-    <div className="rounded-xl border border-slate-200 overflow-hidden bg-white">
+    <div
+      className={`rounded-xl border overflow-hidden bg-white transition-colors ${
+        hasErrorInSection ? "border-red-200" : "border-slate-200"
+      }`}
+    >
       <button
         type="button"
         onClick={() => setOpen(!open)}
@@ -228,20 +254,26 @@ function FormSection({
           className={`flex-shrink-0 w-6 h-6 rounded-full text-[10px] font-bold flex items-center justify-center transition-colors ${
             isComplete
               ? "bg-emerald-100 text-emerald-600"
+              : hasErrorInSection
+              ? "bg-red-100 text-red-500"
               : "bg-slate-200 text-slate-500"
           }`}
         >
           {section.id}
         </span>
 
-        {/* Title + completion */}
+        {/* Title + completion count */}
         <div className="flex-1 min-w-0 flex items-center justify-between gap-2">
           <span className="text-[12px] font-semibold text-slate-700">
             {section.title}
           </span>
           <span
             className={`text-[10px] font-medium flex-shrink-0 ${
-              isComplete ? "text-emerald-500" : "text-slate-400"
+              isComplete
+                ? "text-emerald-500"
+                : hasErrorInSection
+                ? "text-red-400"
+                : "text-slate-400"
             }`}
           >
             {filledInSection}/{section.fields.length}
@@ -266,6 +298,7 @@ function FormSection({
               field={field}
               value={formData[field.key]}
               onChange={(val) => onChange(field.key, val)}
+              hasError={errorFieldKey === field.key}
             />
           ))}
         </div>
@@ -280,6 +313,8 @@ export default function ProductInputForm({
   loadSampleSignal,
 }: ProductInputFormProps) {
   const [formData, setFormData] = useState<ProductInput>(EMPTY_FORM);
+  const [errorFieldKey, setErrorFieldKey] = useState<keyof ProductInput | null>(null);
+  const [formError, setFormError] = useState("");
 
   useEffect(() => {
     if (loadSampleSignal) setFormData(PAYFLOW_SAMPLE);
@@ -287,17 +322,29 @@ export default function ProductInputForm({
 
   function updateField(key: keyof ProductInput, value: string) {
     setFormData((prev) => ({ ...prev, [key]: value }));
+    // Clear error when user edits the offending field
+    if (key === errorFieldKey) {
+      setErrorFieldKey(null);
+      setFormError("");
+    }
   }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setErrorFieldKey(null);
+    setFormError("");
+
     const missing = (
       Object.entries(formData) as [keyof ProductInput, string][]
     ).find(([, v]) => !v.trim());
+
     if (missing) {
-      alert(`Please fill in: ${String(missing[0]).replace(/_/g, " ")}`);
+      const readableName = String(missing[0]).replace(/_/g, " ");
+      setErrorFieldKey(missing[0]);
+      setFormError(`Please fill in: ${readableName}`);
       return;
     }
+
     onSubmit(formData);
   }
 
@@ -341,7 +388,11 @@ export default function ProductInputForm({
       <div className="px-5 py-2.5 border-b border-slate-100 bg-slate-50/60 flex items-center gap-2">
         <button
           type="button"
-          onClick={() => setFormData(PAYFLOW_SAMPLE)}
+          onClick={() => {
+            setFormData(PAYFLOW_SAMPLE);
+            setErrorFieldKey(null);
+            setFormError("");
+          }}
           className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-[11px] font-medium rounded-md border border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
         >
           <FlaskConical className="h-3 w-3" />
@@ -349,7 +400,11 @@ export default function ProductInputForm({
         </button>
         <button
           type="button"
-          onClick={() => setFormData(EMPTY_FORM)}
+          onClick={() => {
+            setFormData(EMPTY_FORM);
+            setErrorFieldKey(null);
+            setFormError("");
+          }}
           className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-[11px] font-medium rounded-md border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 transition-colors"
         >
           <Trash2 className="h-3 w-3" />
@@ -357,15 +412,25 @@ export default function ProductInputForm({
         </button>
       </div>
 
+      {/* Inline form-level error banner */}
+      {formError && (
+        <div className="mx-4 mt-3 flex items-center gap-2 px-3 py-2 bg-red-50 border border-red-200 rounded-lg">
+          <AlertCircle className="h-3.5 w-3.5 text-red-500 flex-shrink-0" />
+          <p className="text-[12px] text-red-600">{formError}</p>
+        </div>
+      )}
+
       {/* Scrollable form sections */}
       <div className="overflow-y-auto max-h-[calc(100vh-210px)] scroll-smooth">
         <div className="px-4 py-4 space-y-3">
-          {FORM_SECTIONS.map((section) => (
+          {FORM_SECTIONS.map((section, i) => (
             <FormSection
               key={section.id}
               section={section}
               formData={formData}
               onChange={updateField}
+              initialOpen={i === 0}
+              errorFieldKey={errorFieldKey}
             />
           ))}
         </div>

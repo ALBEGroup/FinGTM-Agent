@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import AppShell from "@/components/AppShell";
 import ProductInputForm from "@/components/ProductInputForm";
@@ -20,12 +20,23 @@ export default function HomePage() {
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [loadSampleSignal, setLoadSampleSignal] = useState(0);
 
+  // Holds the current in-flight request controller so we can cancel it on re-submit or reset
+  const abortRef = useRef<AbortController | null>(null);
+
   async function handleGenerate(input: ProductInput) {
+    // Cancel any in-flight request before starting a new one
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     setState("loading");
     setMarkdown("");
     setErrorMessage("");
 
-    const result = await generateGTMPack(input);
+    const result = await generateGTMPack(input, controller.signal);
+
+    // Ignore stale result if this request was already superseded
+    if (controller.signal.aborted) return;
 
     if (result.success && result.markdown) {
       setMarkdown(result.markdown);
@@ -37,6 +48,8 @@ export default function HomePage() {
   }
 
   function handleReset() {
+    abortRef.current?.abort();
+    abortRef.current = null;
     setState("idle");
     setMarkdown("");
     setErrorMessage("");
@@ -52,7 +65,8 @@ export default function HomePage() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    // Delay revoke slightly to allow Safari to read the blob
+    setTimeout(() => URL.revokeObjectURL(url), 100);
   }
 
   return (
@@ -81,7 +95,7 @@ export default function HomePage() {
 
       {/* Two-column workspace */}
       <div className="flex flex-col lg:flex-row gap-5 pb-8">
-        {/* Left: input panel only — sticky */}
+        {/* Left: input panel — sticky */}
         <aside className="w-full lg:w-[380px] lg:flex-shrink-0">
           <div className="lg:sticky lg:top-4">
             <ProductInputForm
@@ -94,7 +108,7 @@ export default function HomePage() {
 
         {/* Right: context panels + state-driven content */}
         <main className="flex-1 min-w-0 flex flex-col gap-4">
-          {/* Persistent context panels — always visible, change with state */}
+          {/* Persistent context panels */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <NextActionsPanel
               state={state}
