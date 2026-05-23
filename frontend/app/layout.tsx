@@ -1,0 +1,29 @@
+﻿// Root layout — sets metadata, fonts, and global styles
+import type { Metadata } from "next";
+import "./globals.css";
+
+export const metadata: Metadata = {
+  title: "FinGTM Agent — B2B FinTech GTM Copilot",
+  description:
+    "Turn a B2B FinTech SaaS idea into a complete GTM pack. Generate ICP, positioning, outbound sequences, sales enablement assets, and pricing strategy in minutes.",
+};
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="en">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body className="bg-slate-50 text-slate-900 antialiased">{children}</body>
+    </html>
+  );
+}
