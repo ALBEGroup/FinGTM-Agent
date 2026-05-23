@@ -1,6 +1,6 @@
 # FinGTM Agent
 
-> **Built by [Becky Dai](https://github.com/beiqidai) and [Alice Liu](https://github.com/iamaliceliu)**
+> **Built by [Becky Dai](https://github.com/Becky-Dai) and [Alice Liu](https://github.com/iamaliceliu)**
 
 **B2B FinTech GTM Copilot** — Turn a product idea into a complete, investor-ready go-to-market strategy in minutes.
 
