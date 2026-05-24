@@ -74,6 +74,10 @@ The workspace is a Stripe-style SaaS dashboard:
 ## Features
 
 - **16 GTM sections** generated from a single product brief in 45–90 seconds
+- **Live market data enrichment** — identifies comparable public companies via LLM, then fetches real financials (revenue, gross margin, market cap, P/E) via yfinance and macroeconomic data (Fed Funds Rate, CPI, GDP growth) via FRED API
+- **Data visualisation** — competitor radar chart, TAM/SAM/SOM funnel chart, and macro stat badges embedded inside the report
+- **Structured JSON output** — second LLM pass extracts market size, competitor table, and executive summary into typed Pydantic models
+- **Function calling tools** — DeepSeek agent has three registered tools: `get_company_financials`, `get_macro_context`, `identify_competitors`
 - **Stripe-style SaaS workspace** — sidebar nav, KPI status bar, grouped report panels
 - **B2B sales logic baked in** — buyer committee mapping, ICP definition, objection handling
 - **FinTech-aware guardrails** — no guaranteed revenue claims, no fake certifications, AI accuracy wording reviewed
@@ -90,9 +94,10 @@ The workspace is a Stripe-style SaaS dashboard:
 
 | Layer | Technology |
 |---|---|
-| Frontend | Next.js 14 (App Router), TypeScript, Tailwind CSS, Framer Motion, react-markdown |
+| Frontend | Next.js 14 (App Router), TypeScript, Tailwind CSS, Framer Motion, react-markdown, recharts |
 | Backend | Python 3.11, FastAPI, OpenAI Agents SDK (`openai-agents`) |
-| AI Model | DeepSeek V3 via OpenAI-compatible API (`deepseek-chat`) |
+| AI Model | DeepSeek V3 via OpenAI-compatible API (`deepseek-chat`) — function calling + structured JSON output |
+| Market Data | yfinance (real-time financials), FRED API (macroeconomic indicators), pandas |
 | UI Icons | lucide-react |
 
 ---
@@ -105,9 +110,15 @@ FinGTM Agent/
 ├── Homepage.png
 ├── .gitignore
 ├── backend/
-│   ├── main.py          # FastAPI app, CORS config, /api/generate-gtm-pack endpoint
-│   ├── agent.py         # DeepSeek agent, system prompt, 16-section GTM prompt builder
-│   ├── schemas.py       # Pydantic models — ProductInput (16 fields), GTMResponse
+│   ├── main.py               # FastAPI app, CORS, rate limiting, /api/generate-gtm-pack
+│   ├── agent.py              # DeepSeek agent, TOOLS schema (function calling), prompt builder
+│   ├── schemas.py            # Pydantic models — ProductInput, GTMResponse (with structured field)
+│   ├── data_service.py       # yfinance company financials + FRED macroeconomic data fetcher
+│   ├── market_context.py     # Ticker identification, context string builder, fetch_market_data()
+│   ├── tool_executor.py      # LLM tool call dispatcher (get_company_financials, get_macro_context, identify_competitors)
+│   ├── structured_output.py  # Pydantic models for structured report (GTMReportStructured, CompanyDataPoint, etc.)
+│   ├── Dockerfile            # Railway/Docker deployment
+│   ├── railway.json          # Railway deployment config
 │   ├── requirements.txt
 │   └── .env.example
 └── frontend/
@@ -115,27 +126,32 @@ FinGTM Agent/
     ├── next.config.js
     ├── tailwind.config.ts
     ├── app/
-    │   ├── layout.tsx       # Root layout, metadata, Google Fonts (Inter)
-    │   ├── page.tsx         # 4-state machine (idle/loading/success/error) + layout orchestration
-    │   └── globals.css      # Tailwind base + .markdown-body prose styles + table styles
+    │   ├── layout.tsx         # Root layout, metadata, Google Fonts (Inter)
+    │   ├── page.tsx           # State machine + structured data wiring
+    │   └── globals.css        # Tailwind base + .markdown-body prose styles
     ├── components/
-    │   ├── AppShell.tsx          # h-screen flex layout — sidebar + scrollable main column
-    │   ├── Sidebar.tsx           # 220px fixed nav (desktop), slide-in overlay (mobile)
-    │   ├── WorkspaceMetrics.tsx  # 4 KPI status cards with live state and success subtitles
-    │   ├── NextActionsPanel.tsx  # Context-aware action list — Suggested (idle) / Ready (success)
-    │   ├── GuardrailsPanel.tsx   # FinTech compliance guardrails — dual-state display
-    │   ├── ProductInputForm.tsx  # 16-field form in 4 collapsible groups, progress bar, loadSampleSignal
-    │   ├── GTMReport.tsx         # 4-group section renderer with staggered animation
-    │   ├── ReportSection.tsx     # Collapsible card — section icon, index, react-markdown, copy button
-    │   ├── LoadingState.tsx      # 8-stage agent workflow timeline with elapsed timer
-    │   ├── EmptyState.tsx        # Module cards + GTM pack structure navigator
-    │   ├── ErrorState.tsx        # Error display with troubleshooting checklist
-    │   ├── CopyButton.tsx        # Copy to clipboard with visual feedback
-    │   └── DownloadButton.tsx    # Download as .md file
+    │   ├── AppShell.tsx            # h-screen flex layout — sidebar + scrollable main
+    │   ├── Sidebar.tsx             # 220px fixed nav (desktop), slide-in overlay (mobile)
+    │   ├── WorkspaceMetrics.tsx    # 4 KPI status cards
+    │   ├── NextActionsPanel.tsx    # Context-aware action list
+    │   ├── GuardrailsPanel.tsx     # FinTech compliance guardrails
+    │   ├── ProductInputForm.tsx    # 16-field form in 4 collapsible groups
+    │   ├── GTMReport.tsx           # 4-group renderer — wires charts into sections 3 and 8
+    │   ├── ReportSection.tsx       # Collapsible card with chartSlot prop
+    │   ├── LoadingState.tsx        # 8-stage workflow timeline with elapsed timer
+    │   ├── EmptyState.tsx          # Module cards + GTM pack structure navigator
+    │   ├── ErrorState.tsx          # Error display with troubleshooting checklist
+    │   ├── CopyButton.tsx          # Copy to clipboard with visual feedback
+    │   ├── DownloadButton.tsx      # Download as .md file
+    │   └── charts/
+    │       ├── CompetitorRadarChart.tsx  # recharts RadarChart — normalised 0-100 multi-company
+    │       ├── MarketFunnelChart.tsx     # recharts FunnelChart — TAM / SAM / SOM
+    │       └── MacroBadges.tsx          # Stat badges — Fed Funds Rate, CPI, GDP Growth
     └── lib/
-        ├── types.ts       # TypeScript interfaces (ProductInput, GenerationState, GTMApiResponse)
+        ├── types.ts       # TypeScript interfaces including GTMStructured, CompanyDataPoint
+        ├── utils.ts       # cn() helper (clsx + tailwind-merge)
         ├── api.ts         # Fetch client — AbortController + 180s timeout + error classification
-        └── sampleData.ts  # PayFlow AI pre-filled demo data (PAYFLOW_SAMPLE, EMPTY_FORM)
+        └── sampleData.ts  # PayFlow AI pre-filled demo data
 ```
 
 ---
@@ -166,17 +182,21 @@ cd backend
 pip install -r requirements.txt
 ```
 
-**Step 3 — Set your DeepSeek API key**
+**Step 3 — Configure environment variables**
 
 ```powershell
-# Windows PowerShell (current session)
-$env:DEEPSEEK_API_KEY = "your_deepseek_api_key_here"
+cp .env.example .env
+# Fill in DEEPSEEK_API_KEY and FRED_API_KEY in .env
 ```
 
-Or create a `.env` file in `backend/`:
-```
-DEEPSEEK_API_KEY=your_deepseek_api_key_here
-```
+| Variable | Required | Where to get it |
+|---|---|---|
+| `DEEPSEEK_API_KEY` | Yes | [platform.deepseek.com](https://platform.deepseek.com) |
+| `FRED_API_KEY` | Yes (for market data) | [fred.stlouisfed.org/docs/api/api_key.html](https://fred.stlouisfed.org/docs/api/api_key.html) — free |
+| `ALLOWED_ORIGIN` | Production only | Your deployed frontend URL |
+| `ENVIRONMENT` | Production only | Set to `production` |
+| `RATE_LIMIT` | Optional | Default `5/minute` |
+| `DEMO_ACCESS_TOKEN` | Optional | Random string to gate public demos |
 
 **Step 4 — Start the backend**
 
@@ -197,7 +217,14 @@ cd frontend
 npm install
 ```
 
-**Step 2 — Start the dev server**
+**Step 2 — Configure environment**
+
+```powershell
+cp .env.example .env.local
+# NEXT_PUBLIC_API_URL=http://localhost:8000  (default, no change needed for local dev)
+```
+
+**Step 3 — Start the dev server**
 
 ```powershell
 npm run dev
@@ -243,6 +270,7 @@ Open: **http://localhost:3000**
 |---|---|---|
 | `DEEPSEEK_API_KEY` | *(required)* | Your DeepSeek API key — server-side only, never expose to the browser |
 | `ALLOWED_ORIGIN` | `http://localhost:3000` | Frontend origin allowed by CORS — set to your production URL before deploying |
+| `ENVIRONMENT` | `development` | Set to `production` to enforce strict CORS (only `ALLOWED_ORIGIN` is accepted). In `development`, `http://127.0.0.1:3000` is also permitted as a local alias |
 | `RATE_LIMIT` | `5/minute` | slowapi rate limit per IP on the generate endpoint (e.g. `"10/minute"`, `"100/hour"`) |
 | `DEMO_ACCESS_TOKEN` | *(unset)* | Optional shared secret to gate the demo. If set, requests must include a matching `X-Demo-Access-Token` header |
 
@@ -309,10 +337,14 @@ Read these files in order to understand the full system:
 | 4-group report section navigation | Done |
 | Sample data (PayFlow AI) | Done |
 | Markdown copy + download per section | Done |
+| Live market data enrichment (yfinance + FRED) | Done |
+| Competitor radar chart + market funnel chart | Done |
+| Function calling tools for data fetching | Done |
+| Structured JSON output (typed Pydantic models) | Done |
+| Railway / Docker deployment config | Done |
 | Streaming output (show report as it generates) | Planned |
 | PDF / DOCX export | Planned |
 | Vertical modes (Payments, Lending, Treasury, InsurTech) | Planned |
-| Competitor analysis agent | Planned |
 | CRM export (HubSpot, Salesforce) | Planned |
 | Team collaboration + saved reports | Planned |
 
