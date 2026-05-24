@@ -2,6 +2,7 @@
 "use client";
 
 import { useState } from "react";
+import React from "react";
 import {
   ChevronDown,
   BarChart2,
@@ -51,6 +52,7 @@ interface ReportSectionProps {
   content: string;
   index: number;
   defaultOpen?: boolean;
+  chartSlot?: React.ReactNode;
 }
 
 export default function ReportSection({
@@ -58,6 +60,7 @@ export default function ReportSection({
   content,
   index,
   defaultOpen = true,
+  chartSlot,
 }: ReportSectionProps) {
   const [open, setOpen] = useState(defaultOpen);
   const Icon = SECTION_ICONS[index - 1] ?? BarChart2;
@@ -97,6 +100,11 @@ export default function ReportSection({
           <div className="markdown-body mt-4">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
           </div>
+          {chartSlot && (
+            <div className="mt-4 pt-4 border-t border-slate-100">
+              {chartSlot}
+            </div>
+          )}
           <div className="mt-4 pt-3 border-t border-slate-100 flex justify-end">
             <CopyButton text={content} label="Copy Section" />
           </div>

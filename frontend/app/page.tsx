@@ -13,7 +13,7 @@ import WorkspaceMetrics from "@/components/WorkspaceMetrics";
 import NextActionsPanel from "@/components/NextActionsPanel";
 import GuardrailsPanel from "@/components/GuardrailsPanel";
 import { generateGTMPack } from "@/lib/api";
-import type { ProductInput, GenerationState } from "@/lib/types";
+import type { ProductInput, GenerationState, GTMStructured } from "@/lib/types";
 
 const LS_REPORT_KEY = "fingtm_last_report";
 const LS_DATE_KEY = "fingtm_last_generated_at";
@@ -34,6 +34,7 @@ function formatDate(iso: string): string {
 export default function HomePage() {
   const [state, setState] = useState<GenerationState>("idle");
   const [markdown, setMarkdown] = useState<string>("");
+  const [structured, setStructured] = useState<GTMStructured | undefined>(undefined);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [loadSampleSignal, setLoadSampleSignal] = useState(0);
 
@@ -73,6 +74,7 @@ export default function HomePage() {
 
     setState("loading");
     setMarkdown("");
+    setStructured(undefined);
     setErrorMessage("");
     // Hide restore banner once user starts generating
     setRestoreMarkdown(null);
@@ -81,14 +83,15 @@ export default function HomePage() {
 
     if (controller.signal.aborted) return;
 
-    if (result.success && result.markdown) {
+    if (result.success) {
       setMarkdown(result.markdown);
+      setStructured(result.structured);
       setState("success");
       // Persist to localStorage
       localStorage.setItem(LS_REPORT_KEY, result.markdown);
       localStorage.setItem(LS_DATE_KEY, new Date().toISOString());
     } else {
-      setErrorMessage(result.error ?? "Unknown error occurred.");
+      setErrorMessage(result.error);
       setState("error");
     }
   }
@@ -98,6 +101,7 @@ export default function HomePage() {
     abortRef.current = null;
     setState("idle");
     setMarkdown("");
+    setStructured(undefined);
     setErrorMessage("");
   }
 
@@ -249,7 +253,7 @@ export default function HomePage() {
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.3 }}
               >
-                <GTMReport markdown={markdown} onRegenerate={handleReset} />
+                <GTMReport markdown={markdown} onRegenerate={handleReset} structured={structured} />
               </motion.div>
             )}
           </AnimatePresence>
