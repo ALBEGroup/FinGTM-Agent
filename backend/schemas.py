@@ -1,6 +1,7 @@
 # Pydantic schemas for API request/response validation
 from pydantic import BaseModel, Field, model_validator
 from typing import Optional
+from structured_output import GTMReportStructured
 
 # Field length limits
 _SHORT = 500
@@ -39,4 +40,6 @@ class ProductInput(BaseModel):
 class GTMResponse(BaseModel):
     success: bool
     markdown: Optional[str] = None
+    structured: Optional[GTMReportStructured] = None
+    data_enriched: bool = False
     error: Optional[str] = None

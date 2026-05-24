@@ -1,5 +1,6 @@
 # FastAPI application entry point for FinGTM Agent backend
 import os
+from typing import Optional
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -10,8 +11,13 @@ from slowapi.errors import RateLimitExceeded
 from dotenv import load_dotenv
 from agents import Runner
 
+import json
+from openai import AsyncOpenAI
+
 from schemas import ProductInput, GTMResponse
 from agent import create_gtm_agent, build_user_prompt
+from market_context import fetch_market_data
+from structured_output import GTMReportStructured, CompanyDataPoint, MacroSnapshot
 
 load_dotenv()
 
@@ -39,10 +45,19 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_json_handler)
 
 # Read allowed origin from env so production deployments can override without code changes
 _ALLOWED_ORIGIN = os.getenv("ALLOWED_ORIGIN", "http://localhost:3000")
+_ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
+
+# In production, only the explicit ALLOWED_ORIGIN is permitted.
+# In development (default), also allow 127.0.0.1 as a local alias for localhost.
+_CORS_ORIGINS = (
+    [_ALLOWED_ORIGIN]
+    if _ENVIRONMENT == "production"
+    else [_ALLOWED_ORIGIN, "http://127.0.0.1:3000"]
+)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[_ALLOWED_ORIGIN, "http://127.0.0.1:3000"],
+    allow_origins=_CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -60,6 +75,113 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
 
 app.add_middleware(SecurityHeadersMiddleware)
+
+
+async def _parse_structured(
+    product_input: ProductInput,
+    markdown_output: str,
+    financials: dict,
+    macro: dict,
+    data_enriched: bool,
+) -> Optional[GTMReportStructured]:
+    """Second DeepSeek call: extract structured fields from the generated Markdown."""
+    try:
+        api_key = os.getenv("DEEPSEEK_API_KEY")
+        if not api_key:
+            return None
+
+        extraction_prompt = f"""从下面的 GTM 报告 Markdown 中提取结构化数据，只返回 JSON，不要任何其他文字。
+
+需要提取的字段：
+- market_size: {{ "summary": string, "tam_usd_billion": number|null, "sam_usd_billion": number|null, "som_usd_billion": number|null, "tam_assumption": bool }}
+- competitors: [ {{ "name": string, "who_uses_it": string, "strengths": string, "weaknesses": string, "displacement_angle": string }} ]  (来自第8章)
+- executive_summary: 第1章的完整文字
+- positioning: 第2章的完整文字
+
+报告内容：
+{markdown_output}"""
+
+        client = AsyncOpenAI(api_key=api_key, base_url="https://api.deepseek.com")
+        response = await client.chat.completions.create(
+            model="deepseek-chat",
+            messages=[{"role": "user", "content": extraction_prompt}],
+            max_tokens=4000,
+            temperature=0,
+        )
+        raw = response.choices[0].message.content.strip()
+
+        # Strip markdown code fences if present
+        if raw.startswith("```"):
+            raw = raw.split("\n", 1)[-1]
+            raw = raw.rsplit("```", 1)[0]
+
+        parsed = json.loads(raw)
+
+        # Build comparable_companies from live financials data — no LLM parsing needed
+        comparable_companies = []
+        for ticker, d in financials.items():
+            if d.get("name") and d["name"] != ticker:
+                comparable_companies.append(
+                    CompanyDataPoint(
+                        name=d["name"],
+                        ticker=ticker,
+                        revenue_usd=d.get("revenue_usd"),
+                        gross_margin_pct=d.get("gross_margin_pct"),
+                        market_cap=d.get("market_cap"),
+                        revenue_growth_yoy=d.get("revenue_growth_yoy"),
+                    )
+                )
+
+        # Build macro_snapshot from live macro data
+        macro_snapshot = None
+        if macro:
+            macro_snapshot = MacroSnapshot(
+                federal_funds_rate=macro.get("federal_funds_rate", {}).get("latest"),
+                cpi_inflation=macro.get("cpi_inflation", {}).get("latest"),
+                gdp_growth_rate=macro.get("gdp_growth_rate", {}).get("latest"),
+            )
+
+        from structured_output import MarketSizeSection, CompetitorRow
+
+        market_size = None
+        ms_raw = parsed.get("market_size")
+        if ms_raw and isinstance(ms_raw, dict) and ms_raw.get("summary"):
+            market_size = MarketSizeSection(
+                summary=ms_raw.get("summary", ""),
+                tam_usd_billion=ms_raw.get("tam_usd_billion"),
+                sam_usd_billion=ms_raw.get("sam_usd_billion"),
+                som_usd_billion=ms_raw.get("som_usd_billion"),
+                tam_assumption=ms_raw.get("tam_assumption", True),
+            )
+
+        competitors = []
+        for row in parsed.get("competitors", []):
+            if isinstance(row, dict) and row.get("name"):
+                competitors.append(
+                    CompetitorRow(
+                        name=row.get("name", ""),
+                        who_uses_it=row.get("who_uses_it", ""),
+                        strengths=row.get("strengths", ""),
+                        weaknesses=row.get("weaknesses", ""),
+                        displacement_angle=row.get("displacement_angle", ""),
+                    )
+                )
+
+        return GTMReportStructured(
+            product_name=product_input.product_name,
+            comparable_companies=comparable_companies,
+            macro_snapshot=macro_snapshot,
+            data_enriched=data_enriched,
+            market_size=market_size,
+            competitors=competitors,
+            executive_summary=parsed.get("executive_summary", ""),
+            positioning=parsed.get("positioning", ""),
+            full_markdown=markdown_output,
+        )
+
+    except Exception as e:
+        print(f"[FinGTM] Structured parsing failed: {e}")
+        return None
 
 
 def _check_demo_token(request: Request) -> None:
@@ -95,8 +217,18 @@ async def generate_gtm_pack(request: Request, product_input: ProductInput):
                 error="DEEPSEEK_API_KEY is not configured.",
             )
 
+        market_ctx = ""
+        financials: dict = {}
+        macro: dict = {}
+        data_enriched = False
+        try:
+            market_ctx, financials, macro = await fetch_market_data(product_input)
+            data_enriched = bool(market_ctx)
+        except Exception as e:
+            print(f"[FinGTM] Market context fetch failed: {e}")
+
         agent = create_gtm_agent()
-        prompt = build_user_prompt(product_input)
+        prompt = build_user_prompt(product_input, market_context=market_ctx)
 
         result = await Runner.run(agent, prompt)
         markdown_output = result.final_output
@@ -107,7 +239,16 @@ async def generate_gtm_pack(request: Request, product_input: ProductInput):
                 error="Agent returned an empty response. Please try again.",
             )
 
-        return GTMResponse(success=True, markdown=markdown_output)
+        structured = await _parse_structured(
+            product_input, markdown_output, financials, macro, data_enriched
+        )
+
+        return GTMResponse(
+            success=True,
+            markdown=markdown_output,
+            structured=structured,
+            data_enriched=data_enriched,
+        )
 
     except HTTPException:
         raise

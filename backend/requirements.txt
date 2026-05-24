@@ -4,3 +4,6 @@ openai-agents
 pydantic
 python-dotenv
 slowapi
+yfinance
+pandas
+fredapi

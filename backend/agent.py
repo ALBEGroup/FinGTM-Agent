@@ -9,6 +9,55 @@ from schemas import ProductInput
 
 set_tracing_disabled(True)
 
+TOOLS = [
+    {
+        "type": "function",
+        "function": {
+            "name": "get_company_financials",
+            "description": "获取指定上市公司的财务数据，包括营收、毛利率、市值、增速等",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "tickers": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "股票代码列表，例如 ['PYPL', 'SQ', 'V']",
+                    }
+                },
+                "required": ["tickers"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_macro_context",
+            "description": "获取当前宏观经济数据：联邦基金利率、CPI通胀、GDP增速",
+            "parameters": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "identify_competitors",
+            "description": "根据产品信息识别3-5个相关的美股上市竞品，返回股票代码列表",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "product_name": {"type": "string"},
+                    "product_category": {"type": "string"},
+                    "target_industry": {"type": "string"},
+                },
+                "required": ["product_name", "product_category", "target_industry"],
+            },
+        },
+    },
+]
+
 AGENT_INSTRUCTIONS = """
 You are a senior B2B SaaS / FinTech GTM strategist with deep expertise in:
 - B2B SaaS positioning and messaging architecture
@@ -48,11 +97,12 @@ CRITICAL: You must output ALL 16 sections completely. Do not stop early or trunc
 """
 
 
-def build_user_prompt(product: ProductInput) -> str:
+def build_user_prompt(product: ProductInput, market_context: str = "") -> str:
+    context_block = f"{market_context}\n\n" if market_context else ""
     return f"""
 Generate a complete FinGTM Report for the following product. Output all 16 sections without stopping.
 
----
+{context_block}---
 Product Name: {product.product_name}
 Product Category: {product.product_category}
 Target Company Size: {product.target_company_size}
